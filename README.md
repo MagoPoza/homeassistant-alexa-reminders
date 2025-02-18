@@ -1,4 +1,4 @@
-# AÑADIR RECORDATORIOS ALEXA AL CALENDARIO LOCAL DE HOMEASSISTANT
+# Recordatorios alexa al calendario local de homeassistant
 Esta guía sirve para agregar automáticamente los recordatorios que creamos en Alexa desde nuestros dispositivos (excepto en la aplicación móvil) al calendario de Home Assistant como eventos. Los añade a un calendario u otro en función de la persona que los ha creado.
 # Requisitos previos
 Para ello es necesario tener la integración de alexa_media_player instalada en homeassistant: https://github.com/alandtse/alexa_media_player
