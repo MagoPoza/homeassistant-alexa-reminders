@@ -1,0 +1,64 @@
+blueprint:
+  name: Recordatorios alexa a calendario HA (Genérico)
+  description: Añade todos los recordatorios de Alexa a un calendario específico
+  domain: automation
+  input:
+    alexa_sensors:
+      name: Sensores de Recordatorios
+      description: Selecciona todos los sensores de recordatorios de Alexa que quieras incluir
+      selector:
+        entity:
+          domain: sensor
+          multiple: true
+    calendar:
+      name: Calendario
+      description: Calendario donde se agregarán todos los recordatorios (obligatorio)
+      selector:
+        entity:
+          domain: calendar
+
+variables:
+  alexa_sensors: !input alexa_sensors
+  calendar: !input calendar
+
+trigger:
+  - platform: state
+    entity_id: !input alexa_sensors
+conditions: []
+actions:
+  - data:
+      message: >-
+        {% set devices = alexa_sensors %}[{% set comma = namespace(needed=false) %}{% for device in devices %}{% set raw_reminders = state_attr(device, 'sorted_active') %}{% if raw_reminders %}{% set reminders = raw_reminders | string | from_json %}{% for reminder in reminders %}{% set reminder_datetime = strptime(reminder[1]['originalDate'] + ' ' + reminder[1]['originalTime'].split('.')[0], '%Y-%m-%d %H:%M:%S') %}{% set current_time = now().replace(tzinfo=None) %}{% if reminder_datetime > current_time %}{% if comma.needed %},{% endif %}{
+          "recordatorio": "{{ reminder[1]['reminderLabel'] | default('') }}",
+          "fecha": "{{ reminder[1]['originalDate'] | default('') }}",
+          "hora": "{{ reminder[1]['originalTime'].split('.')[0] if reminder[1]['originalTime'] is defined else '' }}",
+          "dispositivo": "{{ device.split('_next')[0] | replace('sensor.', '') }}"
+        }{% set comma.needed = true %}{% endif %}{% endfor %}{% endif %}{% endfor %}]
+    action: shell_command.alexa_reminders_new
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 5
+      milliseconds: 0
+  - response_variable: eventos_nuevos
+    action: shell_command.compare_reminders
+    data: {}
+  - if:
+      - condition: template
+        value_template: >-
+          {{ eventos_nuevos.stdout is not none and eventos_nuevos.stdout |
+          from_json | length > 0 }}
+    then:
+      - repeat:
+          for_each: "{{ eventos_nuevos.stdout | from_json }}"
+          sequence:
+            - target:
+                entity_id: !input calendar
+              data:
+                summary: "{{ repeat.item.summary }}"
+                start_date_time: "{{ repeat.item.start_date_time }}"
+                end_date_time: "{{ repeat.item.end_date_time }}"
+              action: calendar.create_event
+  - action: shell_command.alexa_reminders_old
+    data: {}
+mode: single

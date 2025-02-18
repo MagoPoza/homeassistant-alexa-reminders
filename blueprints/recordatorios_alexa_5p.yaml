@@ -1,0 +1,237 @@
+blueprint:
+  name: Recordatorios alexa a calendario HA (5 Person)
+  description: Añade los recordatorios de Alexa al calendario correspondiente según la persona que lo creó, válido para 5 personas
+  domain: automation
+  input:
+    alexa_sensors:
+      name: Sensores de Recordatorios
+      description: Selecciona todos los sensores de recordatorios de Alexa que quieras incluir
+      selector:
+        entity:
+          domain: sensor
+          multiple: true
+    general_calendar:
+      name: Calendario General
+      description: Calendario donde se agregarán los recordatorios sin persona asignada
+      selector:
+        entity:
+          domain: calendar
+    person_1_name:
+      name: Nombre Persona 1
+      description: Nombre de la primera persona (obligatorio)
+      default: ""
+      selector:
+        text:
+    person_1_id:
+      name: ID Persona 1
+      description: Amazon Person ID (ejemplo amzn1.account.123456789). (obligatorio)
+      default: ""
+      selector:
+        text:
+    person_1_calendar:
+      name: Calendario Persona 1
+      description: Calendario para la primera persona (obligatorio)
+      default: ""
+      selector:
+        entity:
+          domain: calendar
+          multiple: false
+    person_2_name:
+      name: Nombre Persona 2
+      description: Nombre de la segunda persona (obligatorio)
+      default: ""
+      selector:
+        text:
+    person_2_id:
+      name: ID Persona 2
+      description: Amazon Person ID (obligatorio)
+      default: ""
+      selector:
+        text:
+    person_2_calendar:
+      name: Calendario Persona 2
+      description: Calendario para la segunda persona (obligatorio)
+      default: ""
+      selector:
+        entity:
+          domain: calendar
+          multiple: false
+    person_3_name:
+      name: Nombre Persona 3
+      description: Nombre de la tercera persona (obligatorio)
+      default: ""
+      selector:
+        text:
+    person_3_id:
+      name: ID Persona 3
+      description: Amazon Person ID (obligatorio)
+      default: ""
+      selector:
+        text:
+    person_3_calendar:
+      name: Calendario Persona 3
+      description: Calendario para la tercera persona (obligatorio)
+      default: ""
+      selector:
+        entity:
+          domain: calendar
+          multiple: false
+    person_4_name:
+      name: Nombre Persona 4
+      description: Nombre de la cuarta persona (obligatorio)
+      default: ""
+      selector:
+        text:
+    person_4_id:
+      name: ID Persona 4
+      description: Amazon Person ID (obligatorio)
+      default: ""
+      selector:
+        text:
+    person_4_calendar:
+      name: Calendario Persona 4
+      description: Calendario para la cuarta persona (obligatorio)
+      default: ""
+      selector:
+        entity:
+          domain: calendar
+          multiple: false
+    person_5_name:
+      name: Nombre Persona 5
+      description: Nombre de la quinta persona (obligatorio)
+      default: ""
+      selector:
+        text:
+    person_5_id:
+      name: ID Persona 5
+      description: Amazon Person ID (obligatorio)
+      default: ""
+      selector:
+        text:
+    person_5_calendar:
+      name: Calendario Persona 5
+      description: Calendario para la quinta persona (obligatorio)
+      default: ""
+      selector:
+        entity:
+          domain: calendar
+          multiple: false
+
+variables:
+  alexa_sensors: !input alexa_sensors
+  person_1_name: !input person_1_name
+  person_2_name: !input person_2_name
+  person_3_name: !input person_3_name
+  person_4_name: !input person_4_name
+  person_5_name: !input person_5_name
+  person_1_id: !input person_1_id
+  person_2_id: !input person_2_id
+  person_3_id: !input person_3_id
+  person_4_id: !input person_4_id
+  person_5_id: !input person_5_id
+  person_1_calendar: !input person_1_calendar
+  person_2_calendar: !input person_2_calendar
+  person_3_calendar: !input person_3_calendar
+  person_4_calendar: !input person_4_calendar
+  person_5_calendar: !input person_5_calendar
+  general_calendar: !input general_calendar
+
+trigger:
+  - platform: state
+    entity_id: !input alexa_sensors
+conditions: []
+actions:
+  - data:
+      message: >-
+        {% set devices = alexa_sensors %}[{% set comma = namespace(needed=false) %}{% for device in devices %}{% set raw_reminders = state_attr(device, 'sorted_active') %}{% if raw_reminders %}{% set reminders = raw_reminders | string | from_json %}{% for reminder in reminders %}{% set reminder_datetime = strptime(reminder[1]['originalDate'] + ' ' + reminder[1]['originalTime'].split('.')[0], '%Y-%m-%d %H:%M:%S') %}{% set current_time = now().replace(tzinfo=None) %}{% if reminder_datetime > current_time %}{% if comma.needed %},{% endif %}{
+          "recordatorio": "{{ reminder[1]['reminderLabel'] | default('') }}",
+          "fecha": "{{ reminder[1]['originalDate'] | default('') }}",
+          "hora": "{{ reminder[1]['originalTime'].split('.')[0] if reminder[1]['originalTime'] is defined else '' }}",
+          "persona": "{% if reminder[1]['personProfile']['personId'] == person_1_id %}{{ person_1_name }}{% elif reminder[1]['personProfile']['personId'] == person_2_id %}{{ person_2_name }}{% elif reminder[1]['personProfile']['personId'] == person_3_id %}{{ person_3_name }}{% elif reminder[1]['personProfile']['personId'] == person_4_id %}{{ person_4_name }}{% elif reminder[1]['personProfile']['personId'] == person_5_id %}{{ person_5_name }}{% else %}{{ reminder[1]['personProfile']['personId'] | default('') }}{% endif %}",
+          "dispositivo": "{{ device.split('_next')[0] | replace('sensor.', '') }}"
+        }{% set comma.needed = true %}{% endif %}{% endfor %}{% endif %}{% endfor %}]
+    action: shell_command.alexa_reminders_new
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 5
+      milliseconds: 0
+  - response_variable: eventos_nuevos
+    action: shell_command.compare_reminders
+    data: {}
+  - if:
+      - condition: template
+        value_template: >-
+          {{ eventos_nuevos.stdout is not none and eventos_nuevos.stdout |
+          from_json | length > 0 }}
+    then:
+      - repeat:
+          for_each: "{{ eventos_nuevos.stdout | from_json }}"
+          sequence:
+            - choose:
+                - conditions:
+                    - condition: template
+                      value_template: "{{ repeat.item.persona == person_1_name }}"
+                  sequence:
+                    - target:
+                        entity_id: !input person_1_calendar
+                      data:
+                        summary: "{{ repeat.item.summary }}"
+                        start_date_time: "{{ repeat.item.start_date_time }}"
+                        end_date_time: "{{ repeat.item.end_date_time }}"
+                      action: calendar.create_event
+                - conditions:
+                    - condition: template
+                      value_template: "{{ repeat.item.persona == person_2_name }}"
+                  sequence:
+                    - target:
+                        entity_id: !input person_2_calendar
+                      data:
+                        summary: "{{ repeat.item.summary }}"
+                        start_date_time: "{{ repeat.item.start_date_time }}"
+                        end_date_time: "{{ repeat.item.end_date_time }}"
+                      action: calendar.create_event
+                - conditions:
+                    - condition: template
+                      value_template: "{{ repeat.item.persona == person_3_name }}"
+                  sequence:
+                    - target:
+                        entity_id: !input person_3_calendar
+                      data:
+                        summary: "{{ repeat.item.summary }}"
+                        start_date_time: "{{ repeat.item.start_date_time }}"
+                        end_date_time: "{{ repeat.item.end_date_time }}"
+                      action: calendar.create_event
+                - conditions:
+                    - condition: template
+                      value_template: "{{ repeat.item.persona == person_4_name }}"
+                  sequence:
+                    - target:
+                        entity_id: !input person_4_calendar
+                      data:
+                        summary: "{{ repeat.item.summary }}"
+                        start_date_time: "{{ repeat.item.start_date_time }}"
+                        end_date_time: "{{ repeat.item.end_date_time }}"
+                      action: calendar.create_event
+                - conditions:
+                    - condition: template
+                      value_template: "{{ repeat.item.persona == person_5_name }}"
+                  sequence:
+                    - target:
+                        entity_id: !input person_5_calendar
+                      data:
+                        summary: "{{ repeat.item.summary }}"
+                        start_date_time: "{{ repeat.item.start_date_time }}"
+                        end_date_time: "{{ repeat.item.end_date_time }}"
+                      action: calendar.create_event
+              default:
+                - target:
+                    entity_id: !input general_calendar
+                  data:
+                    summary: "{{ repeat.item.summary }}"
+                    start_date_time: "{{ repeat.item.start_date_time }}"
+                    end_date_time: "{{ repeat.item.end_date_time }}"
+                  action: calendar.create_event
+  - action: shell_command.alexa_reminders_old
+    data: {}
+mode: single
