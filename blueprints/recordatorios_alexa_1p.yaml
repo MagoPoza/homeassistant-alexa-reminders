@@ -1,6 +1,6 @@
 blueprint:
   name: Recordatorios alexa a calendario HA (1 Persona)
-  description: Añade los recordatorios de Alexa al calendario correspondiente según la persona que lo creó, válido para 1 persona
+  description: Añade los recordatorios de Alexa al calendario de homeassistant correspondiente según la persona que lo creó, válido para 1 persona
   domain: automation
   input:
     alexa_sensors:
@@ -17,20 +17,20 @@ blueprint:
         entity:
           domain: calendar
     person_1_name:
-      name: Nombre Persona 1
-      description: Nombre de la primera persona (obligatorio)
+      name: Nombre Persona 1  (Obligatorio)
+      description: Nombre de la primera persona
       default: ""
       selector:
         text:
     person_1_id:
-      name: ID Persona 1
-      description: Amazon Person ID (ejemplo amzn1.account.123456789). (obligatorio)
+      name: ID Persona 1 (Obligatorio)
+      description: Amazon Person ID (ejemplo amzn1.account.123456789)
       default: ""
       selector:
         text:
     person_1_calendar:
-      name: Calendario Persona 1
-      description: Calendario para la primera persona (obligatorio)
+      name: Calendario Persona 1 (Obligatorio)
+      description: Calendario para la primera persona
       default: ""
       selector:
         entity:

@@ -1,6 +1,6 @@
 blueprint:
   name: Recordatorios alexa a calendario HA (Genérico)
-  description: Añade todos los recordatorios de Alexa a un calendario específico
+  description: Añade todos los recordatorios de Alexa a un calendario específico de homeassistant
   domain: automation
   input:
     alexa_sensors:
@@ -32,6 +32,7 @@ actions:
           "recordatorio": "{{ reminder[1]['reminderLabel'] | default('') }}",
           "fecha": "{{ reminder[1]['originalDate'] | default('') }}",
           "hora": "{{ reminder[1]['originalTime'].split('.')[0] if reminder[1]['originalTime'] is defined else '' }}",
+          "persona": "{{ reminder[1]['personProfile']['personId'] if reminder[1].get('personProfile', {}).get('personId') else '' }}",
           "dispositivo": "{{ device.split('_next')[0] | replace('sensor.', '') }}"
         }{% set comma.needed = true %}{% endif %}{% endfor %}{% endif %}{% endfor %}]
     action: shell_command.alexa_reminders_new
