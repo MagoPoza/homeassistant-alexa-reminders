@@ -29,7 +29,7 @@ Sustituyendo 'sensor.echo_show_salon_next_reminder' por el sensor de nuestro dis
 
 Ese será el ID de la persona que ha creado el próximo recordatorio en ese dispositivo. OJO no es el último recordatorio creado sino el próximo que nos va a notificar.
 
-Ahora debemos elegir que blueprint tenemos que utilizar en función de las personas que vayamos a agregar. Si vamos a agregar una persona con su ID y calendario elegiremos el blueprint `recordatorios_alexa_1p.yaml`, si vamos a agregar dos personas `recordatorios_alexa_1p.yaml`, etc.
+Ahora debemos elegir que blueprint tenemos que utilizar en función de las personas que vayamos a agregar. Si vamos a agregar una persona con su ID y calendario elegiremos el blueprint `recordatorios_alexa_1p.yaml`, si vamos a agregar dos personas `recordatorios_alexa_2p.yaml`, etc.
 
 Es importante elegir el blueprint con el número exacto de personas que vamos a agregar (nombre, ID y calendario), ya que todos los campos son obligatorios de rellenar. Si no queremos añadir ninguna persona y que todos los recordatorios vayan a un calendario principal podemos elegir el modelo genérico `recordatorios_alexa_generico.yaml`.
 
