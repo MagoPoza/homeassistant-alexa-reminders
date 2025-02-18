@@ -38,3 +38,7 @@ En homeassistant en la sección de plantillas pulsamos en importar plantilla y p
 Por último creamos una automatización a partir de ese blueprint y lo rellenamos con nuestros datos.
 
 Ahora ya podemos pedir a alexa que nos recuerde algo y veremos un nuevo evento en nuestro calendario de homeassistant.
+
+Se puede combinar con este blueprint que envía los recordatorios de nuestro calendario a nuestro chat de telegram y permite posponerlos mediante botones accionables.
+
+https://github.com/MagoPoza/homeassistant-blueprints/blob/main/notificacion_telegram_eventos_calendario.yaml
