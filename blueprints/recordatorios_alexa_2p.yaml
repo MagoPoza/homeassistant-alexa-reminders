@@ -1,5 +1,5 @@
 blueprint:
-  name: Recordatorios alexa a calendario HA (3 Personas)
+  name: Recordatorios alexa a calendario HA (2 Personas)
   description: Añade los recordatorios de Alexa al calendario de homeassistant correspondiente según la persona que lo creó, válido para 2 personas
   domain: automation
   input:
