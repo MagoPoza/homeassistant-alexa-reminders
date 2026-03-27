@@ -93,17 +93,32 @@ variables:
 trigger:
   - platform: state
     entity_id: !input alexa_sensors
+    attribute: sorted_active
+
 conditions: []
+
 actions:
   - data:
       message: >-
-        {% set devices = alexa_sensors %}[{% set comma = namespace(needed=false) %}{% for device in devices %}{% set raw_reminders = state_attr(device, 'sorted_active') %}{% if raw_reminders %}{% set reminders = raw_reminders | string | from_json %}{% for reminder in reminders %}{% set reminder_datetime = strptime(reminder[1]['originalDate'] + ' ' + reminder[1]['originalTime'].split('.')[0], '%Y-%m-%d %H:%M:%S') %}{% set current_time = now().replace(tzinfo=None) %}{% if reminder_datetime > current_time %}{% if comma.needed %},{% endif %}{
-          "recordatorio": "{{ reminder[1]['reminderLabel'] | default('') }}",
-          "fecha": "{{ reminder[1]['originalDate'] | default('') }}",
-          "hora": "{{ reminder[1]['originalTime'].split('.')[0] if reminder[1]['originalTime'] is defined else '' }}",
-          "persona": "{% if reminder[1]['personProfile']['personId'] == person_1_id %}{{ person_1_name }}{% elif reminder[1]['personProfile']['personId'] == person_2_id %}{{ person_2_name }}{% elif reminder[1]['personProfile']['personId'] == person_3_id %}{{ person_3_name }}{% else %}{{ reminder[1]['personProfile']['personId'] | default('') }}{% endif %}",
-          "dispositivo": "{{ device.split('_next')[0] | replace('sensor.', '') }}"
-        }{% set comma.needed = true %}{% endif %}{% endfor %}{% endif %}{% endfor %}]
+        {% set devices = alexa_sensors %}
+        [{% set comma = namespace(needed=false) %}
+        {% for device in devices %}
+          {% set reminders = state_attr(device, 'sorted_active') %}
+          {% if reminders %}
+            {% for reminder in reminders %}
+              {% if comma.needed %},{% endif %}
+              {
+                "id": "{{ reminder['id'] | default('') }}",
+                "recordatorio": "{{ reminder['reminderLabel'] | default('') }}",
+                "fecha": "{{ reminder['originalDate'] | default('') }}",
+                "hora": "{{ reminder['originalTime'].split('.')[0] if reminder['originalTime'] is defined else '' }}",
+                "persona": "{% set pp = reminder.get('personProfile') %}{% if pp and pp.get('personId') == person_1_id %}{{ person_1_name }}{% elif pp and pp.get('personId') == person_2_id %}{{ person_2_name }}{% elif pp and pp.get('personId') == person_3_id %}{{ person_3_name }}{% else %}{% endif %}",
+                "dispositivo": "{{ device.split('_next')[0] | replace('sensor.', '') }}"
+              }
+              {% set comma.needed = true %}
+            {% endfor %}
+          {% endif %}
+        {% endfor %}]
     action: shell_command.alexa_reminders_new
   - delay:
       hours: 0
@@ -166,4 +181,6 @@ actions:
                   action: calendar.create_event
   - action: shell_command.alexa_reminders_old
     data: {}
-mode: single
+
+mode: queued
+max: 2
