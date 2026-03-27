@@ -70,6 +70,7 @@ variables:
 trigger:
   - platform: state
     entity_id: !input alexa_sensors
+    attribute: sorted_active
 
 conditions: []
 
